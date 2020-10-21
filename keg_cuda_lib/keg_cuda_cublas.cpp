@@ -106,11 +106,12 @@ bool keg::CuBlasSessionImpl::setTensorCore() {
 
 // double precision.
 template<>
-bool keg::CuBlasSessionImpl::multiplyMatrix<double>( const CuBlasGPUMatrix<double>& A_matrix,
-                                                     const CuBlasGPUMatrix<double>& B_matrix,
-                                                     CuBlasGPUMatrix<double>& C_matrix,
-                                                     double alpha,
-                                                     double beta) {
+bool keg::CuBlasSessionImpl::multiplyMatrix<double>(const GPUMatrix<double>& A_matrix,
+                                                    const GPUMatrix<double>& B_matrix,
+                                                    GPUMatrix3<double>& C_matrix,
+                                                    size_t c_matrix_index,
+                                                    double alpha,
+                                                    double beta) {
 
   // Check dimensions
   if (A_matrix.rows() == 0 or A_matrix.columns() == 0) {
@@ -146,12 +147,12 @@ bool keg::CuBlasSessionImpl::multiplyMatrix<double>( const CuBlasGPUMatrix<doubl
                                             A_matrix.rows(),
                                             A_matrix.columns(),
                                             &alpha,
-                                            static_cast<const double *>(B_matrix.data()),
+                                            B_matrix.data(),
                                             B_matrix.columns(),
-                                            static_cast<const double *>(A_matrix.data()),
+                                            A_matrix.data(),
                                             A_matrix.columns(),
                                             &beta,
-                                            static_cast<double *>(C_matrix.data()),
+                                            C_matrix.data(c_matrix_index),
                                             C_matrix.columns()), "cublasDgemm");
 
 }
@@ -162,11 +163,12 @@ bool keg::CuBlasSessionImpl::multiplyMatrix<double>( const CuBlasGPUMatrix<doubl
 
 // single precision.
 template<>
-bool keg::CuBlasSessionImpl::multiplyMatrix<float>( const CuBlasGPUMatrix<float>& A_matrix,
-                                                    const CuBlasGPUMatrix<float>& B_matrix,
-                                                    CuBlasGPUMatrix<float>& C_matrix,
-                                                    float alpha,
-                                                    float beta) {
+bool keg::CuBlasSessionImpl::multiplyMatrix<float>(const GPUMatrix<float>& A_matrix,
+                                                   const GPUMatrix<float>& B_matrix,
+                                                   GPUMatrix3<float>& C_matrix,
+                                                   size_t c_matrix_index,
+                                                   float alpha,
+                                                   float beta) {
 
   // Check dimensions
   if (A_matrix.rows() == 0 or A_matrix.columns() == 0) {
@@ -202,12 +204,12 @@ bool keg::CuBlasSessionImpl::multiplyMatrix<float>( const CuBlasGPUMatrix<float>
                                             A_matrix.rows(),
                                             A_matrix.columns(),
                                             &alpha,
-                                            static_cast<const float *>(B_matrix.data()),
+                                            B_matrix.data(),
                                             B_matrix.columns(),
-                                            static_cast<const float *>(A_matrix.data()),
+                                            A_matrix.data(),
                                             A_matrix.columns(),
                                             &beta,
-                                            static_cast<float *>(C_matrix.data()),
+                                            C_matrix.data(c_matrix_index),
                                             C_matrix.columns()), "cublasSgemm");
 
 }

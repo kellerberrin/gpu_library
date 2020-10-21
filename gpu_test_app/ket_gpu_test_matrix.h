@@ -68,7 +68,7 @@ private:
   constexpr static const size_t FLOPS_PER_MULTIPLICATION = MATRIX_SIZE_ * MATRIX_SIZE_ * MATRIX_SIZE_ * 2;
   const double DEVICE_MEMORY_USAGE_ = 0.9;  // Approximate proportion of the device memory to allocate.
 
-  const size_t BLOCK_SIZE_ = 32;
+  const size_t BLOCK_SIZE_ = 16;
   size_t iterations_;
 
   // Cuda context information.
@@ -76,10 +76,12 @@ private:
   CUfunction cuda_function_struct_;
 
   // Matrices.
-  CuBlasGPUMatrix<double> matrix_Ad_;
-  CuBlasGPUMatrix<double> matrix_Bd_;
-  CuBlasGPUMatrix<float> matrix_Af_;
-  CuBlasGPUMatrix<float> matrix_Bf_;
+  GPUMatrix<double> matrix_Ad_;
+  GPUMatrix<double> matrix_Bd_;
+  GPUMatrix3<double> matrix_Cd_;
+  GPUMatrix<float> matrix_Af_;
+  GPUMatrix<float> matrix_Bf_;
+  GPUMatrix3<float> matrix_Cf_;
 
   CUdeviceptr cuda_Cdata_ptr_;
   CUdeviceptr cuda_Adata_ptr_;

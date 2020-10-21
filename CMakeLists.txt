@@ -62,7 +62,7 @@ set(CUDA_LIBRARY_SOURCE_FILES
         keg_cuda_lib/keg_cuda_device.h
         keg_cuda_lib/keg_cuda_cublas.cpp
         keg_cuda_lib/keg_cuda_cublas.h
-        keg_cuda_lib/keg_cuda_cublas_matrix.h)
+        keg_cuda_lib/keg_gpu_matrix.h keg_cuda_lib/keg_gpu_mem.cpp keg_cuda_lib/keg_gpu_mem.h keg_cuda_lib/keg_gpu_matrix3.h)
 
 set(CUDA_TEST_APP_FILES
         gpu_test_app/cuda_kernel.cu
@@ -76,7 +76,7 @@ set(CUDA_TEST_APP_FILES
 
 find_package(CUDAToolkit)
 
-add_library(keg_cuda STATIC ${CUDA_LIBRARY_SOURCE_FILES})
+add_library(keg_cuda STATIC ${CUDA_LIBRARY_SOURCE_FILES} keg_cuda_lib/keg_gpu_mem.cpp keg_cuda_lib/keg_gpu_mem.h)
 
 target_link_libraries(keg_cuda kel_utility ${Boost_LIBRARIES} ${CUDA_LIBRARIES} cuda cublas cudart nvidia-ml)
 

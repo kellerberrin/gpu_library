@@ -75,20 +75,16 @@ std::pair<size_t, size_t>  ket::GPUMatrixTest::memoryInfo() {
 void ket::GPUMatrixTest::compute() {
 
 
-  for (size_t i = 0; i < iterations_; ++i) {
+  for (size_t result_index = 0; result_index < iterations_; ++result_index) {
 
     if (double_flag_) {
 
-      CUdeviceptr result_offset = cuda_Cdata_ptr_ + (i * MATRIX_ELEMENTS_ * sizeof(double));
-      CuBlasGPUMatrix<double> matrix_Cd(result_offset, MATRIX_SIZE_, MATRIX_SIZE_);
-      cublas_session_.multiplyMatrix(matrix_Ad_, matrix_Bd_, matrix_Cd);
+      cublas_session_.multiplyMatrix(matrix_Ad_, matrix_Bd_, matrix_Cd_, result_index);
 
     }
     else {
 
-      CUdeviceptr result_offset = cuda_Cdata_ptr_ + (i * MATRIX_ELEMENTS_ * sizeof(float));
-      CuBlasGPUMatrix<float> matrix_Cf(result_offset, MATRIX_SIZE_, MATRIX_SIZE_);
-      cublas_session_.multiplyMatrix(matrix_Af_, matrix_Bf_, matrix_Cf);
+      cublas_session_.multiplyMatrix(matrix_Af_, matrix_Bf_, matrix_Cf_, result_index);
 
     } // if double
 
@@ -100,8 +96,8 @@ void ket::GPUMatrixTest::compute() {
 void ket::GPUMatrixTest::compare() {
 
   CheckCode::check(cuMemsetD32Async(cuda_faulty_data_ptr_, 0, 1, 0), "memset");
-  CheckCode::check(cuLaunchGridAsync(cuda_function_struct_, MATRIX_SIZE_ / BLOCK_SIZE_, MATRIX_SIZE_ / BLOCK_SIZE_, 0), "cuLaunchGridAsync");
-  CheckCode::check(cuMemcpyDtoHAsync(faultyElemsHost_ptr_, cuda_faulty_data_ptr_, sizeof(int), 0), "cuMemcpyDtoHAsync");
+//  CheckCode::check(cuLaunchGridAsync(cuda_function_struct_, MATRIX_SIZE_ / BLOCK_SIZE_, MATRIX_SIZE_ / BLOCK_SIZE_, 0), "cuLaunchGridAsync");
+//  CheckCode::check(cuMemcpyDtoHAsync(faultyElemsHost_ptr_, cuda_faulty_data_ptr_, sizeof(int), 0), "cuMemcpyDtoHAsync");
 
 }
 
@@ -117,12 +113,12 @@ void ket::GPUMatrixTest::initialize_memory() {
 
   if (double_flag_) {
 
-    CuBlasHostMatrix<double> A( MATRIX_SIZE_, MATRIX_SIZE_);
-    CuBlasHostMatrix<double> B( MATRIX_SIZE_, MATRIX_SIZE_);
+    HostMatrix<double> A(MATRIX_SIZE_, MATRIX_SIZE_);
+    HostMatrix<double> B(MATRIX_SIZE_, MATRIX_SIZE_);
 
     for (size_t row = 0; row < A.rows(); ++row) {
 
-      for (size_t column = 0; row < A.columns(); ++column) {
+      for (size_t column = 0; column < A.columns(); ++column) {
 
         A(row, column, random_unit_real.random(entropy.generator()));
         B(row, column, random_unit_real.random(entropy.generator()));
@@ -134,16 +130,17 @@ void ket::GPUMatrixTest::initialize_memory() {
     matrix_Ad_ = A.transferToGPU();
     matrix_Bd_ = B.transferToGPU();
     iterations_ = allocate_device_memory  / (MATRIX_ELEMENTS_ * sizeof(double));
+    matrix_Cd_.reallocateMatrices(MATRIX_SIZE_, MATRIX_SIZE_, iterations_);
     actual_allocation = iterations_ * MATRIX_ELEMENTS_ * sizeof(double);
 
   } else {
 
-    CuBlasHostMatrix<float> A( MATRIX_SIZE_, MATRIX_SIZE_);
-    CuBlasHostMatrix<float> B( MATRIX_SIZE_, MATRIX_SIZE_);
+    HostMatrix<float> A(MATRIX_SIZE_, MATRIX_SIZE_);
+    HostMatrix<float> B(MATRIX_SIZE_, MATRIX_SIZE_);
 
     for (size_t row = 0; row < A.rows(); ++row) {
 
-      for (size_t column = 0; row < A.columns(); ++column) {
+      for (size_t column = 0; column < A.columns(); ++column) {
 
         A(row, column, static_cast<float>(random_unit_real.random(entropy.generator())));
         B(row, column, static_cast<float>(random_unit_real.random(entropy.generator())));
@@ -155,12 +152,10 @@ void ket::GPUMatrixTest::initialize_memory() {
     matrix_Af_ = A.transferToGPU();
     matrix_Bf_ = B.transferToGPU();
     iterations_ = allocate_device_memory  / (MATRIX_ELEMENTS_ * sizeof(float));
+    matrix_Cf_.reallocateMatrices(MATRIX_SIZE_, MATRIX_SIZE_, iterations_);
     actual_allocation = iterations_ * MATRIX_ELEMENTS_ * sizeof(float);
 
   }
-
-  CheckCode::check(cuMemAlloc(&cuda_Cdata_ptr_, actual_allocation), "cuMemAlloc");
-  CheckCode::check(cuMemAlloc(&cuda_faulty_data_ptr_, sizeof(int)), "cuMemAlloc");
 
   ExecEnv::log().info("GPU {}, {}, total device memory {}MB, available (free) {}MB, allocated for test {}MB",
                       device_.getDeviceIdent(), device_.getDeviceName(),
@@ -196,7 +191,9 @@ void ket::GPUMatrixTest::initCompareKernel() {
   if (double_flag_) {
 
     CheckCode::check(cuParamSetSize(cuda_function_struct_, __alignof(double *) + __alignof(int *) + __alignof(size_t)), "set param size");
+    cuda_Cdata_ptr_ = reinterpret_cast<CUdeviceptr>(*matrix_Cd_.getPointerAddress());
     CheckCode::check(cuParamSetv(cuda_function_struct_, 0, &cuda_Cdata_ptr_, sizeof(double *)), "set param");
+//    CheckCode::check(cuParamSetv(cuda_function_struct_, 0, matrix_Cd_.getPointerAddress(), sizeof(double *)), "set param");
     CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(double *), &cuda_faulty_data_ptr_, sizeof(double *)), "set param");
     CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(double *) + __alignof(int *), &iterations_, sizeof(size_t)), "set param");
 
