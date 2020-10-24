@@ -31,7 +31,6 @@ public:
   HostMatrix<T> transferToHost(size_t matrix_index) const;
 
   [[nodiscard]] T* data(size_t matrix_index) const;
-  [[nodiscard]] void** getPointerAddress() { return gpu_memory_.getPointerAddress(); };
 
   [[nodiscard]] size_t rows() const { return rows_; }
   [[nodiscard]] size_t columns() const { return columns_; }

@@ -3,21 +3,17 @@
 //
 
 #include "ket_gpu_test_matrix.h"
+#include "ket_gpu_test_check.h"
 #include "kel_distribution.h"
 #include "keg_cuda_device.h"
 #include "keg_cuda_cublas.h"
 
 
 namespace ket = kellerberrin::gpu::test;
+namespace kel = kellerberrin;
 
 
-
-
-ket::GPUMatrixTest::~GPUMatrixTest() {
-
-  CheckCode::check(cuMemFreeHost(faultyElemsHost_ptr_));
-
-}
+ket::GPUMatrixTest::~GPUMatrixTest() {}
 
 
 void ket::GPUMatrixTest::initialize() {
@@ -30,25 +26,7 @@ void ket::GPUMatrixTest::initialize() {
 
   }
 
-  CheckCode::check(cuMemAllocHost((void **) &faultyElemsHost_ptr_, sizeof(int)));
-  error_count_ = 0;
-
   initialize_memory();
-
-}
-
-
-size_t ket::GPUMatrixTest::getErrors() {
-
-  if (*faultyElemsHost_ptr_ > 0) {
-
-    error_count_ += *faultyElemsHost_ptr_;
-
-  }
-  size_t tempErrs = error_count_;
-  error_count_ = 0;
-
-  return tempErrs;
 
 }
 
@@ -95,9 +73,18 @@ void ket::GPUMatrixTest::compute() {
 
 void ket::GPUMatrixTest::compare() {
 
-  CheckCode::check(cuMemsetD32Async(cuda_faulty_data_ptr_, 0, 1, 0), "memset");
-//  CheckCode::check(cuLaunchGridAsync(cuda_function_struct_, MATRIX_SIZE_ / BLOCK_SIZE_, MATRIX_SIZE_ / BLOCK_SIZE_, 0), "cuLaunchGridAsync");
-//  CheckCode::check(cuMemcpyDtoHAsync(faultyElemsHost_ptr_, cuda_faulty_data_ptr_, sizeof(int), 0), "cuMemcpyDtoHAsync");
+  size_t errors{0};
+  if (double_flag_) {
+
+    kel::doubleMatrixCheck(GRID_XY_, BLOCK_XY_, errors, matrix_Cd_.data(0), iterations_);
+
+  } else {
+
+    kel::floatMatrixCheck(GRID_XY_, BLOCK_XY_, errors, matrix_Cf_.data(0), iterations_);
+
+  }
+
+  error_count_ += errors;
 
 }
 
@@ -166,48 +153,7 @@ void ket::GPUMatrixTest::initialize_memory() {
                       (double_flag_ ? "using double precision" : "using single precision (float)"),
                       (tensor_flag_ ? ", using Tensor Cores" : ""));
 
-  initCompareKernel();
-
 }
 
-
-void ket::GPUMatrixTest::initCompareKernel() {
-
-  const char *kernelFile = "cuda_kernel.ptx";
-
-  {
-
-    std::ifstream f(kernelFile);
-    CheckCode::check(f.good() ? CUDA_SUCCESS : CUDA_ERROR_NOT_FOUND, std::string("couldn't find file \"") + kernelFile + "\" from working directory");
-
-  }
-
-  CheckCode::check(cuModuleLoad(&cuda_module_struct_, kernelFile), "load module");
-  CheckCode::check(cuModuleGetFunction(&cuda_function_struct_, cuda_module_struct_,
-                                 double_flag_ ? "compareD" : "compare"), "get func");
-
-  CheckCode::check(cuFuncSetCacheConfig(cuda_function_struct_, CU_FUNC_CACHE_PREFER_L1), "L1 config");
-
-  if (double_flag_) {
-
-    CheckCode::check(cuParamSetSize(cuda_function_struct_, __alignof(double *) + __alignof(int *) + __alignof(size_t)), "set param size");
-    cuda_Cdata_ptr_ = reinterpret_cast<CUdeviceptr>(*matrix_Cd_.getPointerAddress());
-    CheckCode::check(cuParamSetv(cuda_function_struct_, 0, &cuda_Cdata_ptr_, sizeof(double *)), "set param");
-//    CheckCode::check(cuParamSetv(cuda_function_struct_, 0, matrix_Cd_.getPointerAddress(), sizeof(double *)), "set param");
-    CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(double *), &cuda_faulty_data_ptr_, sizeof(double *)), "set param");
-    CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(double *) + __alignof(int *), &iterations_, sizeof(size_t)), "set param");
-
-  } else {
-
-    CheckCode::check(cuParamSetSize(cuda_function_struct_, __alignof(float *) + __alignof(int *) + __alignof(size_t)), "set param size");
-    CheckCode::check(cuParamSetv(cuda_function_struct_, 0, &cuda_Cdata_ptr_, sizeof(float *)), "set param");
-    CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(float *), &cuda_faulty_data_ptr_, sizeof(float *)), "set param");
-    CheckCode::check(cuParamSetv(cuda_function_struct_, __alignof(float *) + __alignof(int *), &iterations_, sizeof(size_t)), "set param");
-
-  }
-
-  CheckCode::check(cuFuncSetBlockShape(cuda_function_struct_, BLOCK_SIZE_, BLOCK_SIZE_, 1), "set block size");
-
-}
 
 

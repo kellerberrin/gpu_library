@@ -68,12 +68,13 @@ private:
   constexpr static const size_t FLOPS_PER_MULTIPLICATION = MATRIX_SIZE_ * MATRIX_SIZE_ * MATRIX_SIZE_ * 2;
   const double DEVICE_MEMORY_USAGE_ = 0.9;  // Approximate proportion of the device memory to allocate.
 
-  const size_t BLOCK_SIZE_ = 16;
-  size_t iterations_;
+  // Kernel launch parameters.
+  constexpr static const size_t BLOCK_SIZE_ = 16;
+  constexpr static const dim3 BLOCK_XY_{BLOCK_SIZE_, BLOCK_SIZE_}; // 256 threads per block.
+  constexpr static const size_t GRID_SIZE_ = ((MATRIX_SIZE_ + BLOCK_SIZE_ - 1) / BLOCK_SIZE_);
+  constexpr static const dim3 GRID_XY_{GRID_SIZE_, GRID_SIZE_};
 
-  // Cuda context information.
-  CUmodule cuda_module_struct_;
-  CUfunction cuda_function_struct_;
+  size_t iterations_;
 
   // Matrices.
   GPUMatrix<double> matrix_Ad_;
@@ -83,22 +84,14 @@ private:
   GPUMatrix<float> matrix_Bf_;
   GPUMatrix3<float> matrix_Cf_;
 
-  CUdeviceptr cuda_Cdata_ptr_;
-  CUdeviceptr cuda_Adata_ptr_;
-  CUdeviceptr cuda_Bdata_ptr_;
-  CUdeviceptr cuda_faulty_data_ptr_;
-
-  size_t error_count_;
-  int *faultyElemsHost_ptr_;
-
+  size_t error_count_{0};
   CuBlasSessionImpl cublas_session_;
 
   void initialize();
   // .first is the total device memory, .second is the available (free) memory
   std::pair<size_t, size_t> memoryInfo();
   void initialize_memory();
-  void initCompareKernel();
-  size_t getErrors();
+  size_t getErrors() const { return error_count_; }
   size_t iterations() const { return iterations_; }
   void compute();
   void compare();

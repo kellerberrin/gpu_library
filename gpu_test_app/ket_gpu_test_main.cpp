@@ -3,6 +3,7 @@
 //
 
 #include "ket_gpu_test_app.h"
+#include "kel_exec_env_app.h"
 
 
 int main(int argc, const char **argv) {

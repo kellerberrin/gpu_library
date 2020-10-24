@@ -130,7 +130,6 @@ public:
   // The Host memory block is resized (if required) and the sub block (if valid) contents transferred to the host memory.
   bool transferSubBlockToHost(size_t byte_offset, size_t byte_size, HostMemory &host_memory) const;
   // The address of the underlying device memory handle.
-  void** getPointerAddress();
 
 private:
 

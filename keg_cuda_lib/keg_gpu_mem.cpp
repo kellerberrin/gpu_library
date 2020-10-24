@@ -408,9 +408,4 @@ bool keg::GPUMemory::transferSubBlockToHost(size_t byte_offset, size_t byte_size
 
 }
 
-void** keg::GPUMemory::getPointerAddress() {
-
-  return unique_device_ptr_->getPtrAddress();
-
-}
 
