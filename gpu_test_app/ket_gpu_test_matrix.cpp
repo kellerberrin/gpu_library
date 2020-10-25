@@ -5,9 +5,9 @@
 #include "ket_gpu_test_matrix.h"
 #include "ket_gpu_test_check.h"
 #include "kel_distribution.h"
-#include "keg_cuda_device.h"
 #include "keg_cuda_cublas.h"
 
+#include "kel_exec_env.h"
 
 namespace ket = kellerberrin::gpu::test;
 namespace kel = kellerberrin;
@@ -36,19 +36,10 @@ std::pair<size_t, size_t> ket::GPUMatrixTest::testGPU() {
   compute();
   compare();
 
-  return { iterations(),  getErrors() };
+  return { iterations_,  error_count_ };
 
 }
 
-
-std::pair<size_t, size_t>  ket::GPUMatrixTest::memoryInfo() {
-
-  size_t total_memory, free_memory;
-  CheckCode::check(cuMemGetInfo(&free_memory, &total_memory));
-
-  return { total_memory, free_memory};
-
-}
 
 void ket::GPUMatrixTest::compute() {
 
@@ -91,7 +82,7 @@ void ket::GPUMatrixTest::compare() {
 void ket::GPUMatrixTest::initialize_memory() {
 
   // Allocate device memory
-  auto [total_memory, free_memory] = memoryInfo();
+  auto [total_memory, free_memory] = device_.memoryInfo();
   auto allocate_device_memory = static_cast<size_t>(static_cast<double>(free_memory) * DEVICE_MEMORY_USAGE_);
   size_t actual_allocation;
   // Initialize the A & B matrices with random numbers.

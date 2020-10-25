@@ -107,6 +107,13 @@ size_t keg::DriverDevice::getDeviceMemoryMbtyes() const {
 
 }
 
+// In bytes, .first total memory, .second available (free) memory.
+[[nodiscard]] std::pair<size_t, size_t>  keg::DriverDevice::memoryInfo() const {
+
+  return constImpl()->memoryInfo();
+
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

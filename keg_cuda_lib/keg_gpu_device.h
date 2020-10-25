@@ -69,6 +69,8 @@ public:
   [[nodiscard]] std::string getDeviceName() const;
   [[nodiscard]] size_t getDeviceMemoryMbtyes() const;
   [[nodiscard]] size_t getDeviceIdent() const;
+  // In bytes, .first total memory, .second available (free) memory.
+  [[nodiscard]] std::pair<size_t, size_t>  memoryInfo() const;
   // Const impl access.
   [[nodiscard]] const DriverDeviceImpl* constImpl() const { return driver_device_impl_.get(); }
 

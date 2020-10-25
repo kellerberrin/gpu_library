@@ -77,10 +77,14 @@ public:
   [[nodiscard]] size_t getDeviceMemoryMbtyes() const;
   [[nodiscard]] CUdevice getCuDevice() const { return gpu_device_; }
   [[nodiscard]] size_t getDeviceIdent() const { return static_cast<size_t>(gpu_device_); }
+  // In bytes, .first total memory, .second available (free) memory.
+  [[nodiscard]] std::pair<size_t, size_t>  memoryInfo() const;
 
 private:
 
   CUdevice gpu_device_;
+
+  constexpr static const size_t MBYTE_ = 1024 * 1024;
 
 };
 

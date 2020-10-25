@@ -13,11 +13,6 @@
 #include "keg_gpu_device.h"
 #include "keg_cuda_cublas.h"
 
-#include <cuda.h>
-#include "cublas_v2.h"
-
-#include "kel_exec_env.h"
-
 namespace kellerberrin::gpu::test {   //  organization::project level namespace
 
 
@@ -62,11 +57,11 @@ private:
   bool double_flag_;
   bool tensor_flag_;
 
+  // Matrix size.
   constexpr static const size_t MATRIX_SIZE_ = 2048; // Matrix size N
   constexpr static const size_t MATRIX_ELEMENTS_ = MATRIX_SIZE_ * MATRIX_SIZE_; // N x N matrix elements
   // Floating point operations using the naive algorithm (MATRIX_SIZE^3 * 2) for a single matrix multiplication A * B.
   constexpr static const size_t FLOPS_PER_MULTIPLICATION = MATRIX_SIZE_ * MATRIX_SIZE_ * MATRIX_SIZE_ * 2;
-  const double DEVICE_MEMORY_USAGE_ = 0.9;  // Approximate proportion of the device memory to allocate.
 
   // Kernel launch parameters.
   constexpr static const size_t BLOCK_SIZE_ = 16;
@@ -74,25 +69,25 @@ private:
   constexpr static const size_t GRID_SIZE_ = ((MATRIX_SIZE_ + BLOCK_SIZE_ - 1) / BLOCK_SIZE_);
   constexpr static const dim3 GRID_XY_{GRID_SIZE_, GRID_SIZE_};
 
+  // Memory usage.
+  constexpr static const double DEVICE_MEMORY_USAGE_ = 0.9;  // Approximate proportion of the device memory to allocate.
   size_t iterations_;
 
-  // Matrices.
+  // Double matrices.
   GPUMatrix<double> matrix_Ad_;
   GPUMatrix<double> matrix_Bd_;
   GPUMatrix3<double> matrix_Cd_;
+  // Float matrices.
   GPUMatrix<float> matrix_Af_;
   GPUMatrix<float> matrix_Bf_;
   GPUMatrix3<float> matrix_Cf_;
 
+  // Matrix mult and error count.
   size_t error_count_{0};
   CuBlasSessionImpl cublas_session_;
 
   void initialize();
-  // .first is the total device memory, .second is the available (free) memory
-  std::pair<size_t, size_t> memoryInfo();
   void initialize_memory();
-  size_t getErrors() const { return error_count_; }
-  size_t iterations() const { return iterations_; }
   void compute();
   void compare();
 
@@ -102,4 +97,4 @@ private:
 } // namespace
 
 
-#endif //GPU_LIBRARY_GPU_MATRIX_TEST_H
+#endif //GPU_MATRIX_TEST_H

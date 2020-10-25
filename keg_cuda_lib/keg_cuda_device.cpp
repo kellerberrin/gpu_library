@@ -209,9 +209,20 @@ std::string keg::DriverDeviceImpl::getDeviceName() const {
   size_t bytes{0};
   CheckCode::check(cuDeviceTotalMem (&bytes, getCuDevice()));
 
-  return (bytes / (1024 * 1024));
+  return (bytes / MBYTE_);
 
 }
+
+
+std::pair<size_t, size_t>  keg::DriverDeviceImpl::memoryInfo() const {
+
+  size_t total_memory{0}, free_memory{0};
+  CheckCode::check(cuMemGetInfo(&free_memory, &total_memory));
+
+  return { total_memory , free_memory };
+
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
