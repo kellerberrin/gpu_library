@@ -25,9 +25,10 @@ public:
 
   static bool check(CUresult cuda_return_code, const std::string& module_text = "");
 
+
 private:
 
-  static std::pair<bool, std::string> checkCudaError(CUresult return_code);
+  static std::pair<bool, std::string> checkCUResult(CUresult return_code);
 
 };
 

@@ -17,7 +17,7 @@ namespace keg = kellerberrin::gpu;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-std::pair<bool, std::string> keg::CheckCode::checkCudaError(CUresult return_code) {
+std::pair<bool, std::string> keg::CheckCode::checkCUResult(CUresult return_code) {
 
   if (return_code == CUDA_SUCCESS) {
 
@@ -30,8 +30,8 @@ std::pair<bool, std::string> keg::CheckCode::checkCudaError(CUresult return_code
 
   if (name_result != CUDA_SUCCESS) {
 
-    kel::ExecEnv::log().error("CheckCode::checkCudaError; invalid (unrecognized) error code: {} returned", static_cast<size_t>(return_code));
-    return { false, "CheckCode::checkCudaError; invalid (unrecognized) error code returned"};
+    kel::ExecEnv::log().error("CheckCode::checkCUResult; invalid (unrecognized) error code: {} returned", static_cast<size_t>(return_code));
+    return { false, "CheckCode::checkCUResult; invalid (unrecognized) error code returned"};
 
   }
 
@@ -40,8 +40,8 @@ std::pair<bool, std::string> keg::CheckCode::checkCudaError(CUresult return_code
 
   if (description_result != CUDA_SUCCESS) {
 
-    kel::ExecEnv::log().error("CheckCode::checkCudaError; invalid (unrecognized) error code: {} returned", static_cast<size_t>(return_code));
-    return { false, "CheckCode::checkCudaError; invalid (unrecognized) error code returned"};
+    kel::ExecEnv::log().error("CheckCode::checkCUResult; invalid (unrecognized) error code: {} returned", static_cast<size_t>(return_code));
+    return { false, "CheckCode::checkCUResult; invalid (unrecognized) error code returned"};
 
   }
 
@@ -54,7 +54,7 @@ std::pair<bool, std::string> keg::CheckCode::checkCudaError(CUresult return_code
 
 bool keg::CheckCode::check(CUresult cuda_return_code, const std::string& module_text) {
 
-  auto text_return_code = checkCudaError(cuda_return_code);
+  auto text_return_code = checkCUResult(cuda_return_code);
 
   if (not text_return_code.first) {
 

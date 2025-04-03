@@ -8,6 +8,7 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <thread>
 
 
 namespace kellerberrin::gpu::test {   //  organization::project level namespace
@@ -25,6 +26,7 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
   size_t error_sum{0};
   const double flops_per_op = test_gpu_ptr->flopsPerOp();
 
+
   std::unique_ptr<GPUEvent> gpu_event_ptr(std::make_unique<GPUEvent>());
 
   std::chrono::steady_clock::time_point begin_test = std::chrono::steady_clock::now();
@@ -34,7 +36,11 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
     auto [iterations, errors] = test_gpu_ptr->testGPU();
 
     gpu_event_ptr->record();
-    while (not gpu_event_ptr->pollOnRecord()) usleep(1000);
+    while (not gpu_event_ptr->pollOnRecord()) {
+
+//      usleep(1000);
+      std::this_thread::sleep_for (std::chrono::milliseconds (1));
+    }
     std::chrono::steady_clock::time_point end_iteration = std::chrono::steady_clock::now();
 
     iteration_sum += iterations;
@@ -43,7 +49,7 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
 
     double gflops_sec = (flops_per_op * static_cast<double>(iterations)) / static_cast<double>(nano_seconds);
     ExecEnv::log().info("GPU {}, {}, Iterations: {}, Errors: {}, GFLOPs: {}",
-                        device_index, device.getDeviceName(), iterations, error_sum, gflops_sec);
+                        device_index, device.getDeviceName(), iterations, error_sum, std::to_string(gflops_sec));
     auto memory = device_information.getMemoryUsage(device_info_index);
     auto utilization = device_information.getGPUUtilization(device_info_index);
     ExecEnv::log().info("GPU {}, {}, Temp: {}C, Fan: {}%, Power: {}/{}W, Memory Usage: {}/{}MB, Kernel Utilization: {}%, Memory Utilization: {}%",
@@ -65,7 +71,7 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
   size_t total_nano_seconds = std::chrono::duration_cast<std::chrono::nanoseconds>(end_test - begin_test).count();
   double average_gflops = (flops_per_op * static_cast<double>(iteration_sum)) / static_cast<double>(total_nano_seconds);
   ExecEnv::log().info("GPU {}, {}, Test completes, Total Iterations: {}, Total Errors: {}, Average GFLOPs: {} ({})",
-                      device_index, device.getDeviceName(), iteration_sum, error_sum, average_gflops,
+                      device_index, device.getDeviceName(), iteration_sum, error_sum, std::to_string(average_gflops),
                       (use_double_precision ? "double" : "float"));
 
 }
@@ -73,6 +79,11 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
 
 
 void startGPUTest(size_t run_length, bool use_double_precision, bool use_tensor_cores) {
+
+  ExecEnv::log().info("GPU Test, Time Seconds: {}, Precision: {}, TensorCores: {}",
+                      run_length,
+                      (use_double_precision ? "Double" : "Float"),
+                      (use_tensor_cores ? "Yes" : "No"));
 
   DeviceInformation device_info;
   auto version = device_info.getLibraryVersion();

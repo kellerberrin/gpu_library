@@ -46,6 +46,8 @@ public:
   ~GPUMatrixTest() override;
 
   double flopsPerOp() override { return static_cast<double>(FLOPS_PER_MULTIPLICATION); }
+
+
   // Operations performed .first, operational errors .second.
   std::pair<size_t, size_t> testGPU() override;
 

@@ -13,6 +13,7 @@
 
 #include <string>
 #include <memory>
+#include <cmath>
 
 
 namespace kellerberrin::gpu {   //  organization::project level namespace

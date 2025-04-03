@@ -4,13 +4,13 @@
 #include "kel_exec_env.h"
 
 // CUDA runtime
+#include "keg_cuda_error.h"
+
 #include <cuda_runtime.h>
 
-// helper functions and utilities to work with CUDA
-#include <helper_functions.h>
-#include <helper_cuda.h>
 
 namespace kel = kellerberrin;
+namespace keg = kellerberrin::gpu;
 
 
 __global__ static void compareFloat(float *matrix_base, int *error_count, size_t matrix_count) {
@@ -76,16 +76,37 @@ bool kel::floatMatrixCheck( const dim3& grid_size,
   int *dev_error{nullptr};
   int host_error{0};
 
-  checkCudaErrors(cudaMalloc((void **) &dev_error, sizeof(int)));
+  cudaError return_code = cudaMalloc((void **) &dev_error, sizeof(int));
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
 
-  checkCudaErrors(cudaMemcpy(dev_error, &host_error, sizeof(int), cudaMemcpyHostToDevice));
+    ExecEnv::log().error("Failed Float Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
+
+  return_code = cudaMemcpy(dev_error, &host_error, sizeof(int), cudaMemcpyHostToDevice);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Float Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
 
   compareFloat<<<grid_size, block_size>>>(matrix_address_base, dev_error, iterations);
 
-  checkCudaErrors(cudaMemcpy(&host_error, dev_error, sizeof(int), cudaMemcpyDeviceToHost));
+  return_code = cudaMemcpy(&host_error, dev_error, sizeof(int), cudaMemcpyDeviceToHost);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Float Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
+
   error_count = host_error;
 
-  checkCudaErrors(cudaFree(dev_error));
+  return_code = cudaFree(dev_error);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Float Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
 
   return true;
 
@@ -101,15 +122,36 @@ bool kel::doubleMatrixCheck( const dim3& grid_size,
   int *dev_error{nullptr};
   int host_error{0};
 
-  checkCudaErrors(cudaMalloc((void **) &dev_error, sizeof(int)));
-  checkCudaErrors(cudaMemcpy(dev_error, &host_error, sizeof(int), cudaMemcpyHostToDevice));
+  cudaError return_code = cudaMalloc((void **) &dev_error, sizeof(int));
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Double Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
+
+  return_code =  cudaMemcpy(dev_error, &host_error, sizeof(int), cudaMemcpyHostToDevice);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Double Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
 
   compareDouble<<<grid_size, block_size>>>(matrix_address_base, dev_error, iterations);
 
-  checkCudaErrors(cudaMemcpy(&host_error, dev_error, sizeof(int), cudaMemcpyDeviceToHost));
+  return_code = cudaMemcpy(&host_error, dev_error, sizeof(int), cudaMemcpyDeviceToHost);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Double Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
   error_count = host_error;
 
-  checkCudaErrors(cudaFree(dev_error));
+  return_code = cudaFree(dev_error);
+  if (not keg::CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Failed Double Matrix Check, Reason: {}", keg::CudaErrorCode::CudaCodeText(return_code));
+
+  }
 
   return true;
 

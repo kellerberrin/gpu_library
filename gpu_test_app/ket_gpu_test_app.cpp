@@ -2,17 +2,26 @@
 // Created by kellerberrin on 6/10/20.
 //
 
+#include <iostream>
 #include "ket_gpu_test_app.h"
 
+namespace kel = kellerberrin;
 namespace ket = kellerberrin::gpu::test;
+
+
+std::unique_ptr<kel::ExecEnvLogger> ket::GPUTestExecEnv::createLogger() {
+
+  // Setup the Logger.
+  return ExecEnv::createLogger(MODULE_NAME, getArgs().log_file_, getArgs().max_error_count_, getArgs().max_warn_count_);
+
+}
 
 
 bool ket::GPUTestExecEnv::parseCommandLine(int argc, char const ** argv) {
 
   int thisParam = 0;
 
-  // Setup the Logger.
-  ExecEnv::createLogger(MODULE_NAME, getArgs().log_file_, getArgs().max_error_count_, getArgs().max_warn_count_);
+  std::cerr <<  "Usage: " << "<-d> (double) <-t> (tensor cores) <120> (seconds - default 60)" << std::endl;
 
   std::vector<std::string> args(argv, argv + argc);
   for (size_t i = 1; i < args.size(); ++i) {
@@ -24,7 +33,7 @@ bool ket::GPUTestExecEnv::parseCommandLine(int argc, char const ** argv) {
 
     }
 
-    if (argc >= 2 and std::string(argv[i]).find("-tc") != std::string::npos) {
+    if (argc >= 2 and std::string(argv[i]).find("-t") != std::string::npos) {
 
       args_.use_tensor_cores_ = true;
       thisParam++;
@@ -39,7 +48,6 @@ bool ket::GPUTestExecEnv::parseCommandLine(int argc, char const ** argv) {
 
   }
 
-  ExecEnv::log().info("Testing GPU(s) for {} seconds.", args_.test_run_time_);
 
   return true;
 

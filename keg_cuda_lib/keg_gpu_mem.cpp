@@ -4,10 +4,11 @@
 
 #include "keg_gpu_mem.h"
 #include "kel_exec_env.h"
+#include "keg_cuda_device.h"
+#include "keg_cuda_error.h"
 
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
-#include <helper_cuda.h>
 
 #include <new>
 
@@ -123,9 +124,17 @@ bool keg::HostMemory::transferToGPU(GPUMemory &gpu_memory) const {
     }
 
   }
-  checkCudaErrors(cudaMemcpy(static_cast<void *>(gpu_memory.memInfo().address()),
-                             static_cast<void *>(memInfo().address()),
-                             byteSize(), cudaMemcpyHostToDevice));
+
+  cudaError return_code = cudaMemcpy(static_cast<void *>(gpu_memory.memInfo().address()),
+                                    static_cast<void *>(memInfo().address()),
+                                    byteSize(), cudaMemcpyHostToDevice);
+
+  if (not CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+    return false;
+
+  }
 
   return true;
 
@@ -155,10 +164,16 @@ bool keg::HostMemory::transferSubBlockToGPU(size_t byte_offset, size_t byte_size
   }
 
   // Transfer the sub-block.
-  checkCudaErrors(cudaMemcpy(static_cast<void *>(subBlock(byte_offset, byte_size).address()),
+  cudaError return_code = cudaMemcpy(static_cast<void *>(subBlock(byte_offset, byte_size).address()),
                              static_cast<void *>(gpu_memory.memInfo().address()),
-                             byte_size, cudaMemcpyHostToDevice));
+                             byte_size, cudaMemcpyHostToDevice);
 
+  if (not CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+    return false;
+
+  }
   return true;
 
 }
@@ -207,17 +222,18 @@ DeviceMemory::DeviceMemory() {
 
 DeviceMemory::DeviceMemory(size_t byte_size) {
 
-  checkCudaErrors(cudaMalloc(&device_mem_ptr_, byte_size));
-  if (device_mem_ptr_ == nullptr) {
+  cudaError return_code = cudaMalloc(&device_mem_ptr_, byte_size);
 
-    ExecEnv::log().error("DeviceMemory::DeviceMemory; unable to allocate device memory, bytes: {}", byte_size);
+  if (not CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+    device_mem_ptr_ = nullptr;
     byte_size_ = 0;
-
-  } else {
-
-    byte_size_ = byte_size;
+    return;
 
   }
+
+  byte_size_ = byte_size;
 
 }
 
@@ -226,7 +242,12 @@ DeviceMemory::~DeviceMemory() {
 
   if (device_mem_ptr_ != nullptr) {
 
-    checkCudaErrors(cudaFree(device_mem_ptr_));
+    cudaError return_code = cudaFree(device_mem_ptr_);
+    if (not CudaErrorCode::validCudaCode(return_code)) {
+
+      ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+
+    }
 
   }
 
@@ -238,7 +259,12 @@ bool DeviceMemory::reallocateMemory(size_t byte_size) {
   // Delete any existing allocation.
   if (device_mem_ptr_ != nullptr) {
 
-    checkCudaErrors(cudaFree(device_mem_ptr_));
+    cudaError return_code = cudaFree(device_mem_ptr_);
+    if (not CudaErrorCode::validCudaCode(return_code)) {
+
+      ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+
+    }
 
   }
 
@@ -252,11 +278,12 @@ bool DeviceMemory::reallocateMemory(size_t byte_size) {
   }
 
   // Else allocate the new block of device memory.
-  checkCudaErrors(cudaMalloc(&device_mem_ptr_, byte_size));
-  if (device_mem_ptr_ == nullptr) {
+  cudaError return_code = cudaMalloc(&device_mem_ptr_, byte_size);
+  if (device_mem_ptr_ == nullptr or not CudaErrorCode::validCudaCode(return_code)) {
 
     byte_size_ = 0;
-    ExecEnv::log().error("DeviceMemory::reallocateMemory; unable to allocate device memory, bytes: {}", byte_size);
+    device_mem_ptr_ = nullptr;
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
     return false;
 
   } else {
@@ -284,10 +311,17 @@ bool DeviceMemory::transferToHost(HostMemory &host_memory) const {
 
   }
 
-  checkCudaErrors(cudaMemcpy(static_cast<void *>(host_memory.memInfo().address()),
+  cudaError return_code = cudaMemcpy(static_cast<void *>(host_memory.memInfo().address()),
                              static_cast<void *>(getAddress()),
                              byteSize(),
-                             cudaMemcpyDeviceToHost));
+                             cudaMemcpyDeviceToHost);
+
+  if (not CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+    return false;
+
+  }
 
   return true;
 
@@ -318,9 +352,16 @@ bool DeviceMemory::transferSubBlockToHost(size_t byte_offset, size_t byte_size, 
   }
 
   // Transfer the sub-block to the host memory.
-  checkCudaErrors(cudaMemcpy(static_cast<void *>(host_memory.memInfo().address()),
+  cudaError return_code = cudaMemcpy(static_cast<void *>(host_memory.memInfo().address()),
                              static_cast<void *>(static_cast<std::byte*>(getAddress()) + byte_offset),
-                             byte_size, cudaMemcpyDeviceToHost));
+                             byte_size, cudaMemcpyDeviceToHost);
+
+  if (not CudaErrorCode::validCudaCode(return_code)) {
+
+    ExecEnv::log().error("Cuda Error: {}", CudaErrorCode::CudaCodeText(return_code));
+    return false;
+
+  }
 
   return true;
 

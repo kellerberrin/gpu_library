@@ -42,6 +42,7 @@ public:
   inline static constexpr const char* MODULE_NAME = "GPU Test";
   static void executeApp() { startGPUTest(args_.test_run_time_, args_.use_double_precision_, args_.use_tensor_cores_); }
   [[nodiscard]] static bool parseCommandLine(int argc, char const ** argv);  // Parse command line arguments.
+  [[nodiscard]] static std::unique_ptr<ExecEnvLogger> createLogger(); // Create application logger.
 
 private:
 
@@ -49,7 +50,6 @@ private:
 
 
 };
-
 
 
 } //  end namespace
