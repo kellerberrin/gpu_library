@@ -14,7 +14,7 @@
 namespace kellerberrin::gpu::test {   //  organization::project level namespace
 
 
-void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_precision, bool use_tensor_cores) {
+void GPUTestThread(const bool* test_active, const DriverDevice& device, bool use_double_precision, bool use_tensor_cores) {
 
   std::unique_ptr<GPUTest> test_gpu_ptr(std::make_unique<GPUMatrixTest>(device, use_double_precision, use_tensor_cores));
   DeviceInformation device_information;
@@ -58,7 +58,7 @@ void GPUTestThread(bool* test_running, DriverDevice device, bool use_double_prec
                         device_information.getPowerUsage(device_info_index), device_information.getMaxPower(device_info_index),
                         memory.first, memory.second, utilization.first, utilization.second);
 
-  } while(*test_running); // work loop
+  } while(*test_active); // work loop
   std::chrono::steady_clock::time_point end_test = std::chrono::steady_clock::now();
 
   gpu_event_ptr->synchronize();

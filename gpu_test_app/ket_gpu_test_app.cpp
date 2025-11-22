@@ -21,10 +21,29 @@ bool ket::GPUTestExecEnv::parseCommandLine(int argc, char const ** argv) {
 
   int thisParam = 0;
 
-  std::cerr <<  "Usage: " << "<-d> (double) <-t> (tensor cores) <120> (seconds - default 60)" << std::endl;
+  if (argc == 1) {
+
+    args_.help_ = false;
+    return true;
+
+  }
 
   std::vector<std::string> args(argv, argv + argc);
   for (size_t i = 1; i < args.size(); ++i) {
+
+    if (argc >= 2 and std::string(argv[i]).find("-h") != std::string::npos) {
+
+      args_.help_ = true;
+      thisParam++;
+
+    }
+
+    if (argc >= 2 and std::string(argv[i]).find("--help") != std::string::npos) {
+
+      args_.help_ = true;
+      thisParam++;
+
+    }
 
     if (argc >= 2 and std::string(argv[i]).find("-d") != std::string::npos) {
 
@@ -53,4 +72,18 @@ bool ket::GPUTestExecEnv::parseCommandLine(int argc, char const ** argv) {
 
 }
 
+void ket::GPUTestExecEnv::executeApp() {
+
+  if (args_.help_) {
+    ExecEnv::log().info("Usage: '<-h/--help> <-d> <-t> <secs>'");
+    ExecEnv::log().info("'<-h/--help> this usage message'");
+    ExecEnv::log().info("'<-d> test using double precision (defaults to float)'");
+    ExecEnv::log().info("'<-t> test using tensor cores (ignored if not available)'");
+    ExecEnv::log().info("'<secs> approximate time to run the test (defaults to 60 seconds)'");
+    return;
+  }
+
+  startGPUTest(args_.test_run_time_, args_.use_double_precision_, args_.use_tensor_cores_);
+
+}
 

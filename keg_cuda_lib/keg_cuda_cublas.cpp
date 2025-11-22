@@ -4,8 +4,6 @@
 
 #include "keg_cuda_cublas.h"
 
-#include "kel_exec_env.h"
-
 #include <map>
 
 namespace kel = kellerberrin;

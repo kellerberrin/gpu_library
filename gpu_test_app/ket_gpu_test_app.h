@@ -6,7 +6,6 @@
 #define KET_GPU_TEST_APP_H
 
 #include "kel_exec_env.h"
-
 #include <string>
 
 namespace kellerberrin::gpu::test {   //  organization::project level namespace
@@ -22,6 +21,7 @@ struct CmdLineArgs {
   int max_error_count_{1000};
   int max_warn_count_{1000};
   bool verbose_{false};
+  bool help_{false};
 
 };
 
@@ -40,7 +40,9 @@ public:
   // The following 4 static members are required for all applications.
   inline static constexpr const char* VERSION = "0.1";
   inline static constexpr const char* MODULE_NAME = "GPU Test";
-  static void executeApp() { startGPUTest(args_.test_run_time_, args_.use_double_precision_, args_.use_tensor_cores_); }
+  // Logger is active when executeApp() is called.
+  static void executeApp();
+  // Logger is inactive when these functions are called.
   [[nodiscard]] static bool parseCommandLine(int argc, char const ** argv);  // Parse command line arguments.
   [[nodiscard]] static std::unique_ptr<ExecEnvLogger> createLogger(); // Create application logger.
 

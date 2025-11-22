@@ -7,7 +7,7 @@
 #include "kel_distribution.h"
 #include "keg_cuda_cublas.h"
 
-#include "kel_exec_env.h"
+#include "../kel_lib/kel_exec_env.h"
 
 namespace ket = kellerberrin::gpu::test;
 namespace kel = kellerberrin;

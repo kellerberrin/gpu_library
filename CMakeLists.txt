@@ -11,6 +11,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/..)
 include_directories(/usr/local/cuda/include
                     /usr/local/cuda/samples/common/inc
         keg_cuda_lib
+        kel_lib
         gpu_test_app)
 #        /usr/local/include/spdlog/include/
 #        ../../Gene/KGL_Gene/kel_utility                 # Basic Infrastructure library
@@ -62,6 +63,19 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}  ${CMAKE_ERROR_WARNI
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_ERROR_WARNING_FLAGS} ${CMAKE_LINKER_FLAGS_RELEASE}")
 
 
+
+set(LIBRARY_SOURCE_FILES
+        kel_lib/kel_exec_env.cpp
+        kel_lib/kel_logging.cpp
+        kel_lib/kel_logging_stream.cpp
+        kel_lib/kel_logging_stream.h
+        kel_lib/kel_utility.cpp
+        kel_lib/kel_utility.h
+        kel_lib/kel_string_hash.h
+        kel_lib/kel_distribution.h
+        kel_lib/kel_distribution.cpp)
+
+
 set(CUDA_LIBRARY_SOURCE_FILES
         keg_cuda_lib/keg_gpu_device_info.cpp
         keg_cuda_lib/keg_gpu_device_info.h
@@ -74,7 +88,9 @@ set(CUDA_LIBRARY_SOURCE_FILES
         keg_cuda_lib/keg_gpu_matrix.h
         keg_cuda_lib/keg_gpu_mem.cpp
         keg_cuda_lib/keg_gpu_mem.h
-        keg_cuda_lib/keg_gpu_matrix3.h)
+        keg_cuda_lib/keg_gpu_matrix3.h
+        keg_cuda_lib/keg_cuda_error.cpp
+        keg_cuda_lib/keg_cuda_error.h)
 
 set(CUDA_TEST_APP_FILES
         gpu_test_app/ket_gpu_test_check.h
@@ -84,27 +100,18 @@ set(CUDA_TEST_APP_FILES
         gpu_test_app/ket_gpu_test_app.h
         gpu_test_app/ket_gpu_test_app.cpp
         gpu_test_app/ket_gpu_test_matrix.cpp
-        gpu_test_app/ket_gpu_test_matrix.h
-        gpu_test_app/kel_exec_env.cpp
-        gpu_test_app/kel_logging.cpp
-        gpu_test_app/kel_logging_stream.cpp
-        gpu_test_app/kel_logging_stream.h
-        keg_cuda_lib/keg_cuda_error.cpp
-        keg_cuda_lib/keg_cuda_error.h
-        gpu_test_app/kel_utility.cpp
-        gpu_test_app/kel_utility.h
-        gpu_test_app/kel_string_hash.h
-        gpu_test_app/kel_distribution.h
-        gpu_test_app/kel_distribution.cpp)
+        gpu_test_app/ket_gpu_test_matrix.h)
 
 
 find_package(CUDAToolkit)
+
+add_library(kel_utility STATIC ${LIBRARY_SOURCE_FILES})
 
 add_library(keg_cuda STATIC ${CUDA_LIBRARY_SOURCE_FILES})
 
 target_link_libraries(keg_cuda kel_utility ${Boost_LIBRARIES} ${CUDA_LIBRARIES} cuda cublas cudart nvidia-ml)
 
-add_executable(gpu_test ${CUDA_TEST_APP_FILES} ${CUDA_LIBRARY_SOURCE_FILES})
+add_executable(gpu_test ${CUDA_TEST_APP_FILES})
 
 target_link_libraries(gpu_test keg_cuda)
 
